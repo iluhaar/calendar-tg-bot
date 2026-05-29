@@ -64,9 +64,11 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   }
 
   const gcalLink = buildGCalLink(result);
-  const timeLabel = result.endTime
-    ? `${result.startTime} – ${result.endTime}`
-    : result.startTime;
+  const timeLabel = result.startTime === null
+    ? "All day"
+    : result.endTime
+      ? `${result.startTime} – ${result.endTime}`
+      : result.startTime;
 
   await sendMessage(
     chatId,

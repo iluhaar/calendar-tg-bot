@@ -3,10 +3,19 @@ import type { EventDetails } from "./ai-parser";
 export function generateIcs(event: EventDetails): string {
   const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}@calendarbot`;
   const dtstamp = utcStamp(new Date());
-  const dtstart = localStamp(event.date, event.startTime);
-  const dtend = event.endTime
-    ? localStamp(event.date, event.endTime)
-    : localStamp(event.date, addHour(event.startTime));
+
+  let dtstart: string;
+  let dtend: string;
+
+  if (event.startTime === null) {
+    const dateCompact = event.date.replace(/-/g, "");
+    const nextDateCompact = nextDay(event.date);
+    dtstart = `DTSTART;VALUE=DATE:${dateCompact}`;
+    dtend = `DTEND;VALUE=DATE:${nextDateCompact}`;
+  } else {
+    dtstart = `DTSTART:${localStamp(event.date, event.startTime)}`;
+    dtend = `DTEND:${event.endTime ? localStamp(event.date, event.endTime) : localStamp(event.date, addHour(event.startTime))}`;
+  }
 
   const lines = [
     "BEGIN:VCALENDAR",
@@ -15,8 +24,8 @@ export function generateIcs(event: EventDetails): string {
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${dtstamp}`,
-    `DTSTART:${dtstart}`,
-    `DTEND:${dtend}`,
+    dtstart,
+    dtend,
     `SUMMARY:${escape(event.title)}`,
   ];
 
@@ -43,4 +52,10 @@ function addHour(time: string): string {
 
 function escape(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
+function nextDay(date: string): string {
+  const d = new Date(date + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10).replace(/-/g, "");
 }

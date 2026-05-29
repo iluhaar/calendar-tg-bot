@@ -1,7 +1,7 @@
 export interface EventDetails {
   title: string;
   date: string;
-  startTime: string;
+  startTime: string | null;
   endTime: string | null;
   location: string | null;
   description: string | null;
@@ -11,8 +11,9 @@ export type ParseResult = EventDetails | { error: "no_datetime" };
 
 const SYSTEM_PROMPT = `You extract calendar event details from text.
 Return JSON only, no markdown, no explanation.
-Format: {"title":"...","date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM or null","location":"... or null","description":"... or null"}
-If the date or time cannot be determined from the text, return: {"error":"no_datetime"}
+Format: {"title":"...","date":"YYYY-MM-DD","startTime":"HH:MM or null","endTime":"HH:MM or null","location":"... or null","description":"... or null"}
+If no time of day is mentioned, set startTime and endTime to null (full-day event).
+If the date cannot be determined from the text, return: {"error":"no_datetime"}
 Today's date for reference: `;
 
 export async function parseEvent(
